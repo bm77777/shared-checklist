@@ -28,7 +28,11 @@ export async function createSession(onSession) {
 
 export async function openHome(client, user, onChange, onStatus, onAccessLost) {
   const home = await requireData(client.from("homes").select("id, owner_id, profile, plan_path").limit(1).maybeSingle());
-  if (!home) throw new Error("이 계정에 연결된 체크리스트가 없어요.");
+  if (!home) {
+    const error = new Error("이 계정에 연결된 체크리스트가 없어요.");
+    error.code = "home_access_denied";
+    throw error;
+  }
   const api = createHome(client, home, user, onChange, onStatus, onAccessLost);
   try {
     const plan = await api.download(home.plan_path);

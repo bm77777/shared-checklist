@@ -740,11 +740,16 @@ const loginPanel = document.getElementById("loginPanel");
 const loginForm = document.getElementById("loginForm");
 const loginStatus = document.getElementById("loginStatus");
 const loginSignOut = document.getElementById("loginSignOut");
+const loginRetry = make("button", "연결 다시 시도");
+loginRetry.type = "button";
+loginRetry.hidden = true;
+loginSignOut.before(loginRetry);
 const header = document.getElementById("appHeader");
 const main = document.getElementById("appMain");
 const importButton = document.getElementById("importHtml");
 const importFile = document.getElementById("importFile");
 let loginClient;
+let signedInUser;
 let connectionId = 0;
 let recordList = [];
 let syncText = "";
@@ -1087,22 +1092,38 @@ async function boot() {
   async function handleSession(user, client) {
     const generation = ++connectionId;
     resetSession();
+    signedInUser = user;
     loginSignOut.hidden = !user;
+    loginRetry.hidden = true;
     submit.disabled = Boolean(user);
     loginStatus.textContent = user ? "공유 프로젝트를 확인하고 있어요." : "등록된 이메일과 비밀번호로 로그인하세요.";
     if (!user) return;
     let bufferedRows = [];
     try {
-      const opened = await openHome(client, user, rows => {
+      const receive = rows => {
         if (generation !== connectionId) return;
         if (sessionHome) showRecords(rows);
         else bufferedRows = rows;
-      }, message => { if (generation === connectionId) status(message); }, () => {
+      };
+      const connectionStatus = message => { if (generation === connectionId) status(message); };
+      const accessLost = () => {
         if (generation !== connectionId) return;
         ++connectionId;
         resetSession();
         loginStatus.textContent = "공유 프로젝트에 접근할 수 없어요.";
-      });
+      };
+      let opened;
+      for (let attempt = 0; generation === connectionId; attempt++) {
+        try {
+          opened = await openHome(client, user, receive, connectionStatus, accessLost);
+          break;
+        } catch (error) {
+          if (error.code === "home_access_denied" || attempt >= 2) throw error;
+          loginStatus.textContent = "잠시 연결이 늦어져 공유 프로젝트에 다시 접속하고 있어요.";
+          await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+        }
+      }
+      if (!opened) return;
       if (generation !== connectionId) {
         opened.api.close();
         return;
@@ -1119,13 +1140,17 @@ async function boot() {
       loginPanel.hidden = true;
       header.hidden = false;
       main.hidden = false;
-    } catch {
+    } catch (error) {
       if (generation !== connectionId) return;
       resetSession();
       loginSignOut.hidden = false;
-      loginStatus.textContent = "이 계정으로 프로젝트를 열 수 없어요. 계정과 연결 상태를 확인하세요.";
+      loginRetry.hidden = false;
+      loginStatus.textContent = error.code === "home_access_denied"
+        ? "이 계정에 연결된 체크리스트가 없어요. 등록된 계정인지 확인하세요."
+        : "공유 서버에 일시적으로 연결할 수 없어요. 연결을 확인하고 다시 시도하세요.";
     }
   }
+  loginRetry.addEventListener("click", () => { if (signedInUser && loginClient) void handleSession(signedInUser, loginClient); });
   try {
     loginClient = await createSession(handleSession);
     if (!loginClient) {
