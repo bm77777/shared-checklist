@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src https://*.supabase.co wss://*.supabase.co; base-uri 'none'; form-action 'none'">
+<meta name="color-scheme" content="light">
+<title>우리 집 인테리어 체크리스트</title>
+<style>
+:root {
+  color: #1c322a;
+  background: #f6f5ef;
+  font-family: "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --ink: #1c322a;
+  --muted: #52615a;
+  --green: #205742;
+  --soft: #e9f1e8;
+  --line: #d9ded3;
+  --paper: #fffefa;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, select, textarea { font: inherit; }
+button, select { cursor: pointer; }
+button, input, select, textarea, a { outline-offset: 3px; }
+:focus-visible { outline: 2px solid #8b5200; }
+a { color: var(--green); }
+button { border: 1px solid var(--line); background: var(--paper); color: var(--ink); padding: 9px 13px; border-radius: 7px; font-weight: 650; }
+button:hover { background: var(--soft); }
+button.primary { background: var(--green); border-color: var(--green); color: white; }
+button.primary:hover { background: #174633; }
+button:disabled { opacity: .55; cursor: default; }
+[hidden] { display: none !important; }
+header { background: #172f26; color: #f8faf3; }
+.hero { max-width: 1240px; margin: auto; padding: 36px 32px 31px; display: flex; justify-content: space-between; align-items: end; gap: 24px; }
+h1 { font-size: clamp(1.8rem, 4vw, 3rem); letter-spacing: -.05em; margin: 0 0 9px; line-height: 1.15; }
+.hero p { margin: 0; color: #d7e4d9; line-height: 1.6; }
+.hero button { white-space: nowrap; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.wrap { max-width: 1240px; margin: auto; padding: 24px 32px 44px; }
+.plan-section { margin-bottom: 31px; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
+.plan-heading { padding: 22px 24px 16px; border-bottom: 1px solid var(--line); }
+.plan-heading h2 { font-size: clamp(1.35rem, 3vw, 2rem); }
+.plan-heading h2 span { margin-left: .35em; color: var(--green); font-size: .64em; white-space: nowrap; }
+.plan-heading p, .plan-figure figcaption { margin: 7px 0 0; font-size: .87rem; color: var(--muted); line-height: 1.55; }
+.plan-layout { display: grid; grid-template-columns: minmax(0, 1fr) 208px; }
+.plan-figure { min-width: 0; margin: 0; padding: 12px 18px 13px; background: #f3f2e9; }
+.floorplan { display: block; width: 100%; max-width: 780px; margin: auto; }
+.plan-figure figcaption { margin: 3px auto 0; max-width: 780px; }
+.plan-directory { padding: 17px 15px; border-left: 1px solid var(--line); }
+.plan-directory h3 { margin: 0 0 9px; font-size: .92rem; }
+[data-plan-room="발코니"] { --room-accent: #21746b; }
+[data-plan-room="거실"] { --room-accent: #9b640c; }
+[data-plan-room="주방"] { --room-accent: #b14e30; }
+[data-plan-room="안방"] { --room-accent: #7054a1; }
+[data-plan-room="작은방"] { --room-accent: #587733; }
+[data-plan-room="화장실"] { --room-accent: #2f669d; }
+[data-plan-room="현관"] { --room-accent: #a13b63; }
+.plan-room-list { display: grid; gap: 5px; margin-bottom: 14px; }
+.plan-room-list button { display: flex; align-items: center; justify-content: space-between; text-align: left; padding: 6px 9px; min-height: 34px; }
+.plan-room-list button[data-highlighted] { background: color-mix(in srgb, var(--room-accent) 9%, var(--paper)); border-color: var(--room-accent); }
+.plan-room-list button[aria-pressed=true] { background: color-mix(in srgb, var(--room-accent) 17%, var(--paper)); border-color: var(--room-accent); }
+.plan-room-count { font-size: .75em; color: var(--green); }
+.plan-directory > a { font-size: .85rem; }
+.plan-zone { cursor: pointer; outline: none; }
+.plan-zone text { fill: #20382d; text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-size: 37px; font-weight: 800; paint-order: stroke; stroke: #fbfaf2; stroke-width: 4px; stroke-linejoin: round; }
+.zone-surface { fill: var(--room-accent); fill-opacity: 0; stroke: var(--room-accent); stroke-opacity: 0; stroke-width: 5px; transition: fill-opacity .16s, stroke-opacity .16s; }
+.plan-zone:is([data-highlighted], :focus-visible) .zone-surface { fill-opacity: .2; stroke-opacity: .75; }
+.plan-zone[aria-current=true] .zone-surface { fill-opacity: .35; stroke-opacity: 1; }
+.plan-divider { fill: none; stroke: #635b45; stroke-width: 2px; stroke-dasharray: 7 8; opacity: .55; pointer-events: none; }
+#workspace { scroll-margin-top: 12px; }
+.workspace-heading { display: flex; align-items: baseline; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; margin: 0 0 13px; }
+.workspace-heading a { font-size: .86rem; }
+#workspace[data-room-selected] .room-control { display: none; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 9px; }
+.toolbar label { display: grid; gap: 5px; font-size: .86rem; font-weight: 700; }
+.search { flex: 1 1 240px; }
+input[type=search], input[type=text], select, textarea { width: 100%; min-height: 41px; padding: 8px 10px; color: var(--ink); background: var(--paper); border: 1px solid #bdc7bd; border-radius: 7px; }
+.toolbar select { min-width: 146px; }
+.hint, .meta, .group-sources { color: var(--muted); font-size: .88rem; line-height: 1.55; }
+#catalogHint { margin: 0 0 20px; }
+.layout { display: grid; grid-template-columns: 214px minmax(0, 1fr); gap: 27px; align-items: start; }
+nav { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto; padding-right: 5px; }
+nav button { display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left; min-height: 37px; padding: 7px 9px; border-color: transparent; background: transparent; font-size: .88rem; gap: 6px; }
+nav button[aria-current=true] { background: var(--soft); border-color: #b9cdb9; color: var(--green); }
+.nav-count { color: var(--muted); font-size: .75rem; }
+#mobileNav { display: none; margin-bottom: 16px; }
+.heading { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin: 1px 0 7px; }
+h2 { margin: 0; font-size: 1.55rem; letter-spacing: -.035em; }
+.group-sources { margin: 0 0 13px; }
+.group-sources a { margin-right: 9px; display: inline-block; }
+.card { margin-bottom: 11px; padding: 14px 15px 11px; border: 1px solid var(--room-accent, var(--line)); border-radius: 10px; background: var(--paper); }
+.card fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.card legend { padding: 0; margin: 0 0 10px; font-size: 1rem; font-weight: 800; }
+.item-stage { display: inline-block; margin-left: 8px; color: var(--muted); font-size: .75rem; font-weight: 650; }
+.item-guidance { margin: -3px 0 9px; }
+.options { display: flex; flex-wrap: wrap; gap: 6px; }
+.option { display: inline-flex; gap: 5px; align-items: center; border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 5px 8px; font-size: .88rem; line-height: 1.4; cursor: pointer; }
+.option:has(input:checked) { border-color: #7da98a; background: var(--soft); color: #184a35; }
+.option input { accent-color: var(--green); margin: 0; width: 15px; height: 15px; flex: 0 0 auto; }
+#workspace[data-room-selected] .option:has(input:checked) {
+  border-color: var(--room-accent);
+  background: color-mix(in srgb, var(--room-accent) 17%, var(--paper));
+  color: color-mix(in srgb, var(--room-accent) 62%, var(--ink));
+}
+#workspace[data-room-selected] .option input:checked { accent-color: var(--room-accent); }
+.card details { margin-top: 9px; }
+summary { cursor: pointer; color: var(--green); font-weight: 650; }
+.card summary { display: list-item; width: fit-content; font-size: .84rem; }
+.extra { display: grid; gap: 5px; margin-top: 8px; }
+.extra label { font-size: .85rem; font-weight: 650; }
+.photo-section { display: grid; gap: 7px; margin-top: 5px; }
+.reference-photos { margin: 0 0 15px; padding: 13px 15px; border: 1px solid var(--room-accent, var(--line)); border-radius: 10px; background: var(--paper); }
+.reference-photos > summary { font-size: 1rem; }
+.reference-photos .photo-section { margin-top: 10px; }
+.photo-paste { min-height: 44px; padding: 11px; border: 1px dashed #8b9c8e; border-radius: 7px; background: #fff; color: var(--muted); font-size: .86rem; cursor: text; resize: none; }
+.photo-status { min-height: 1.4em; margin: 0; }
+.photo-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin: 4px 0 0; }
+.photo-thumb { display: block; width: 100%; aspect-ratio: 1; padding: 0; overflow: hidden; cursor: zoom-in; }
+.photo-tile { position: relative; min-width: 0; }
+.photo-delete { position: absolute; inset: 4px 4px auto auto; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border-color: rgba(255,255,255,.8); border-radius: 50%; color: white; background: #28332b; font-size: 19px; line-height: 1; }
+.photo-delete:hover, .photo-delete:focus-visible { background: #8b382d; }
+.photo-confirm { border-color: #8b382d; background: #8b382d; color: white; }
+.photo-confirm:hover { background: #713025; }
+.photo-grid img { display: block; width: 100%; height: 100%; aspect-ratio: 1; object-fit: cover; object-position: center; }
+.photo-grid > img { border-radius: 7px; }
+#photoViewer { width: fit-content; max-width: calc(100% - 24px); max-height: calc(100% - 24px); padding: 0; overflow: hidden; }
+#photoViewer::backdrop { background: #101611c7; }
+#closePhoto { display: block; padding: 0; border: 0; border-radius: 0; background: transparent; cursor: zoom-out; }
+#fullPhoto { display: block; max-width: min(90vw, 1050px); max-height: 88vh; width: auto; height: auto; }
+.inline { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.inline input { flex: 1 1 160px; }
+textarea { resize: vertical; min-height: 54px; }
+#catalogResults section + section { margin-top: 25px; }
+#referencePanel { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 16px; }
+#referencePanel ol { columns: 2; padding-left: 23px; }
+#referencePanel li { break-inside: avoid; margin-bottom: 7px; }
+.summary-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 20px; }
+.summary-room { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 13px; padding: 15px 17px; }
+.summary-room h3 { margin: 0 0 10px; }
+.summary-room h4 { margin: 14px 0 6px; font-size: .95rem; color: var(--green); }
+.summary-room ul { padding-left: 21px; margin: 0 0 4px; }
+.summary-room li { padding: 3px 0; overflow-wrap: anywhere; }
+.memo { display: block; white-space: pre-wrap; color: var(--muted); }
+dialog { width: min(420px, calc(100% - 30px)); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); background: var(--paper); }
+dialog::backdrop { background: #172f2666; }
+dialog form { display: grid; gap: 10px; }
+dialog h2 { margin-bottom: 6px; font-size: 1.3rem; }
+#feedback { min-height: 1.5em; margin: 5px 0; color: var(--green); }
+#printSheet { display: none; }
+@media (max-width: 720px) {
+  .hero { padding: 25px 16px; flex-direction: column; align-items: start; gap: 13px; }
+  .wrap { padding: 16px; }
+  .plan-heading { padding: 15px 12px; }
+  .plan-layout { display: block; }
+  .plan-figure { padding: 7px 7px 9px; }
+  .plan-directory { padding: 10px 12px; border-left: 0; border-top: 1px solid var(--line); }
+  .plan-room-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .plan-zone text { font-size: 44px; }
+  .layout { display: block; }
+  nav { display: none; }
+  #mobileNav { display: block; }
+  #referencePanel ol { columns: auto; }
+}
+@media print {
+  body { background: white; color: black; }
+  body > :not(#printSheet) { display: none !important; }
+  #printSheet { display: block !important; }
+  #printSheet h2 { margin-bottom: 12px; }
+  #printSheet h3, #printSheet h4 { break-after: avoid; }
+  .summary-room { border: 0; padding: 5px 0; }
+}
+.login-panel { max-width: 420px; margin: 10vh auto; padding: 25px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
+.login-panel h1 { font-size: 1.65rem; }
+.login-panel form, .login-panel label { display: grid; gap: 5px; }
+.login-panel form { gap: 12px; margin-top: 16px; }
+.login-panel input { width: 100%; min-height: 42px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; }
+.sync-status { max-width: 1240px; padding: 0 32px 12px; margin: 0 auto; font-size: .86rem; color: #e0eadd; }
+.sync-status:empty { display: none; }
+.note-status { margin: 0; }
+button.note-save { width: fit-content; }
+@media (max-width: 450px) { .login-panel { margin: 8vh 16px; } .sync-status { padding-inline: 16px; } }
+</style>
+</head>
+<body>
+<section class="login-panel" id="loginPanel" aria-labelledby="loginTitle">
+  <h1 id="loginTitle">인테리어 체크리스트</h1>
+  <form id="loginForm">
+    <label>이메일 <input name="email" type="email" autocomplete="username" required></label>
+    <label>비밀번호 <input name="password" type="password" autocomplete="current-password" required></label>
+    <button type="submit" class="primary" disabled>로그인</button>
+  </form>
+  <p id="loginStatus" class="hint" role="status">연결을 확인하고 있어요.</p>
+  <button id="loginSignOut" type="button" hidden>다른 계정으로 로그인</button>
+</section>
+<header id="appHeader" hidden>
+  <div class="hero">
+    <div>
+      <h1>우리 집 인테리어 체크리스트</h1>
+      <p>우리 집 평면도에서 공간별 시공 옵션을 골라 보세요.</p>
+    </div>
+    <div class="hero-actions">
+      <button id="showSelection" type="button" aria-pressed="false">내 인테리어 목록 <span id="selectedCount">0</span></button>
+      <button id="exportHtml" type="button">사진 포함 HTML 저장</button>
+      <button id="importHtml" type="button" hidden>기존 기록 가져오기</button>
+      <input id="importFile" type="file" accept=".html,.json" hidden>
+      <button id="signOut" type="button">로그아웃</button>
+    </div>
+  </div>
+<p class="sync-status" id="syncStatus" role="status"></p>
+</header>
+<main class="wrap" id="appMain" hidden>
+  <div id="catalogView">
+<section class="plan-section" aria-labelledby="planTitle">
+  <div class="plan-heading">
+    <div>
+      <h2 id="planTitle">평면도</h2>
+      <p>도면 위에 마우스를 올려 공간을 확인하고, 눌러서 옵션을 고르세요.</p>
+    </div>
+  </div>
+  <div class="plan-layout">
+    <figure class="plan-figure">
+      <svg class="floorplan" id="sharedPlan" role="group" aria-label="공간 선택 도면"></svg>
+      <figcaption>공간 선택용 개략도</figcaption>
+    </figure>
+    <div class="plan-directory">
+      <h3>공간 선택</h3>
+      <div class="plan-room-list" id="planRoomList" aria-label="공간 선택"></div>
+      <a href="#workspace" id="browseFromPlan">전체 공정 보기</a>
+    </div>
+  </div>
+</section>
+
+    <section id="workspace" aria-labelledby="workspaceTitle">
+    <div class="workspace-heading">
+      <h2 id="workspaceTitle" tabindex="-1">전체 공정 체크리스트</h2>
+      <a id="backToPlan" href="#planTitle">도면에서 공간 선택</a>
+    </div>
+    <details class="reference-photos" id="referencePhotos" open>
+      <summary id="referencePhotosTitle">레퍼런스 사진</summary>
+      <div id="referencePhotoTools"></div>
+    </details>
+    <div class="toolbar">
+      <label class="room-control">기록할 공간
+        <select id="room"></select>
+      </label>
+      <button id="addRoom" class="room-control" type="button">공간 추가</button>
+      <label>검토 단계
+        <select id="stageFilter">
+          <option value="">모든 단계</option>
+        </select>
+      </label>
+      <label class="search">옵션 검색
+        <input id="search" type="search" placeholder="예: 간접등, 걸레받이, 아일랜드">
+      </label>
+    </div>
+    <p id="catalogHint" class="hint">같은 항목도 공간마다 따로 체크할 수 있어요. <span id="scopeHint">단계와 검색어는 전체 공정에서 찾아요.</span> 공사 중·준공 항목은 업체에 확인을 요청할 항목을 체크하고, 메모에 결과를 남기세요. <span id="saveStatus"></span></p>
+    <div class="layout">
+      <nav id="categoryNav" aria-label="공정 카테고리"></nav>
+      <div>
+        <label id="mobileNav">공정 카테고리
+          <select id="categorySelect"></select>
+        </label>
+        <div id="catalogResults"></div>
+        <details id="referencePanel">
+          <summary>조사 범위와 출처</summary>
+          <p class="hint">국내 아파트와 주택의 실내 리모델링을 기준으로, 공개 시공 가이드·제품 설치 자료·소비자 피해 사례를 대조했습니다. 단계 표시는 처음 논의하거나 확인하기 좋은 시점입니다. 첫 상담에서는 생활 요구와 공사 범위를, 실측 후에는 치수와 설치 조건을 확인하세요. 구조·소방·전기·가스와 공용설비에 영향을 주는 작업은 현장 조건과 필요한 절차를 업체·관리주체에 확인하세요.</p>
+          <ol id="sourceList"></ol>
+        </details>
+      </div>
+    </div>
+    </section>
+  </div>
+  <section id="selectionView" hidden>
+    <h2>내 인테리어 목록</h2>
+    <p id="selectionMeta" class="meta"></p>
+    <div class="summary-actions">
+      <button id="backToCatalog" class="primary" type="button">옵션 더 고르기</button>
+      <button id="download" type="button">텍스트 저장</button>
+      <button id="print" type="button">인쇄 · PDF 저장</button>
+    </div>
+    <div id="selectionResults"></div>
+  </section>
+  <p id="feedback" role="status"></p>
+</main>
+<section id="printSheet" aria-hidden="true"></section>
+<dialog id="roomDialog" aria-labelledby="roomTitle">
+  <form id="roomForm">
+    <h2 id="roomTitle">공간 추가</h2>
+    <label for="roomName">공간 이름</label>
+    <input id="roomName" type="text" placeholder="예: 아이방, 안방 욕실" maxlength="40" required>
+    <div class="inline">
+      <button id="cancelRoom" type="button">취소</button>
+      <button type="submit" class="primary">추가</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="photoViewer" aria-label="첨부 사진 확대">
+  <button id="closePhoto" type="button" aria-label="사진 축소">
+    <img id="fullPhoto" alt="첨부 사진 확대 보기">
+  </button>
+</dialog>
+<dialog id="deletePhotoDialog" aria-labelledby="deletePhotoTitle">
+  <form method="dialog">
+    <h2 id="deletePhotoTitle">사진을 삭제하시겠습니까?</h2>
+    <div class="inline">
+      <button value="cancel" autofocus>취소</button>
+      <button value="delete" class="photo-confirm">삭제</button>
+    </div>
+  </form>
+</dialog>
+<noscript>체크리스트를 사용하려면 브라우저에서 JavaScript를 켜 주세요.</noscript>
+<script id="catalog" type="text/plain">
+# 범위·생활 계획|전체·공통|process,prepare
+주거 형태|아파트 / 주상복합 / 빌라·다세대 / 단독·다가구 / 오피스텔 / 복층
+공사 범위|전체 리모델링 / 일부 공간 리모델링 / 마감재 위주 교체 / 설비 포함 / 구조·동선 변경 포함 / 원상복구 범위 포함|brief|유지·철거·신설 범위를 공간별로 표시하고 제외 범위도 상담에서 확인하세요.
+진행 방식|턴키 / 설계·시공 분리 / 반셀프·공정별 발주 / 일부 직접 시공
+생활 구성|1인 / 부부·동거인 / 영유아 / 학령기 자녀 / 고령자 / 휠체어 사용자 / 반려견 / 반려묘 / 재택근무
+생활 요구|수납 중심 / 청소·유지관리 / 홈오피스 / 취미·운동 / 홈카페 / 홈시어터 / 손님·가족 식사 / 분리수면 / 실내건조 / 방음
+공사 중 거주·짐|공실 시공 / 거주 중 구역별 시공 / 임시 거처 / 짐 보관 이사 / 일부 가구 현장 보관 / 기존 가구 재사용
+우선순위·예산|필수 / 예산 여유 시 / 제외 / 기본안과 옵션안 별도 견적 / 예비비 확보 / 가전·가구 예산 분리 / 총액·입주일 기록
+디자인 방향|미니멀 / 내추럴 / 모던 / 클래식 / 미드센추리 / 인더스트리얼 / 컬러 포인트 / 레퍼런스 사진·링크
+현장 조건|평면도 확보 / 실측 요청 / 누수 흔적 / 결로·곰팡이 / 소음 / 바닥 단차 / 낮은 천장 / 노후 배관 / 기존 확장 / 전기 용량 확인|brief|사진이나 도면이 있으면 알려진 누수·결로·불편 위치를 함께 표시하세요.
+# 철거·구조·단열|전체·공통|process,demolition,law,acoustic
+철거 범위|기존 유지 / 선택 철거 / 실내 전체 철거 / 폐기물·수거 포함 / 공용부 보양 포함 / 철거 후 추가 공사 범위 협의
+철거 대상|주방가구 / 붙박이장 / 벽지 / 바닥재 / 바닥 미장층 / 걸레받이·몰딩 / 창호 / 문짝·문틀 / 아트월 / 천장 / 가벽 / 욕실 / 현관 타일 / 기존 가전
+동선·공간 변경|기존 평면 유지 / 가벽 철거 검토 / 가벽 신설 / 방 합치기 / 방 분리 / 문 옮기기 / 문 막기 / 개구부 만들기 / 주방 개방 / 주방 분리
+신설 벽체|목재틀·석고보드 / 경량 스터드·석고보드 / 조적 / 유리 파티션 / 반벽 / 가구형 파티션 / 루버 / 이동식 파티션
+발코니 구조|기존 유지 / 신규 확장 검토 / 기존 확장부 보수 / 세탁·실외기 구역 유지 / 확장부 난방 검토 / 피난 설비·방화 구획 확인 / 신고·허가 가능 여부 확인|design|확장·철거 가능 여부와 필요한 절차는 건물 조건에 따라 확인하세요.
+단열·결로|기존 유지 / 외기에 면한 벽 보강 / 확장부 벽·바닥·천장 보강 / 창 주변 열교 보강 / 결로 원인 조사 / 방습층 검토 / 단열재 종류·두께 업체 제안
+바탕면·미장|기존 바탕 사용 / 바닥 레벨링 / 벽 평탄화 / 천장 평탄화 / 균열·파손 보수 / 바탕 건조·습기 확인
+누수·유해자재 사전 확인|누수 원인 확인 / 젖은 자재 교체 / 곰팡이 원인 제거 / 노후 마감재 석면 조사 필요 여부 / 철거 전 배관·전기 확인
+차음·흡음|기존 유지 / 벽체 차음 보강 / 천장 차음 검토 / 문 기밀 보강 / 창호 소음 개선 / 바닥 완충재 / 흡음 패널 / 방진 패드
+구조·설비 변경 전 현장 확인|도면과 현장 구조 비교 / 철거·타공 전 구조체 및 매립물 확인 / 공용 배관·덕트와 세대 설비 구분 / 철거 후 재확인할 범위 표시|design
+# 창호·유리·방충망|전체·공통|window,process
+창호 공사 범위|그대로 사용 / 실리콘 재시공 / 부속·모헤어 교체 / 유리만 교체 / 내부창만 / 외부창만 / 해당 공간 전체 교체 / 전체 집 교체 / 창호 공사 후 기존 블라인드·보안 센서 재설치
+창 분류·프레임|단창 / 이중창 / 내창 / 외창 / PVC / 알루미늄 / 목재 / 복합 프레임 / 외부 입면·창 프레임 색상 변경 가능 여부 확인
+개폐 방식|고정창 / 미서기 / 여닫이 / 프로젝트창 / 틸트앤턴 / 리프트 슬라이딩 / 폴딩 / 상·하부 분할 복합창
+유리 구성|단판 / 복층 / 삼중 / 로이 코팅 / 아르곤 충전 / 강화 / 접합 / 투명 / 불투명·무늬 / 자외선 차단 필름
+창 부속|일반망 / 미세 방충망 / 롤 방충망 / 어린이 안전 잠금 / 열림 제한 / 추락 방지 장치 검토 / 핸들 방식 선택 / 단열 덧창 / 창호 추락 방지·안전 장치와 개폐 간섭 확인
+마감·사양|창틀 색상 / 안팎 다른 색 / 인조대리석 창대 / 목재·필름 창대 / 타일 창턱 / 실란트 색 / 기밀·단열·차음 성능 비교 / 실측 후 규격 확정
+# 현관·중문|현관|door,middle,built
+현관 출입문|기존 유지 / 내부 필름 리폼 / 도장 / 고무 패킹 교체 / 도어클로저 교체 / 문짝·틀 교체 검토 / 디지털 도어락 / 방문자 카메라
+중문 설치 여부|미설치 / 기존 유지 / 기존 보수 / 기존 철거 후 교체 / 신규 설치 / 설치 가능 여부 확인|brief|개폐 방식은 통과폭과 신발장·현관문 간섭을 실측한 뒤 정하세요.
+중문 개폐 방식|원슬라이딩 / 양방향 슬라이딩 / 2연동 / 3연동 / 4연동 / 한 짝 여닫이 / 양개 여닫이 / 비대칭 양개 / 양방향 스윙 / 폴딩 / 자동 슬라이딩
+중문 동선·구조|왼쪽 열림 / 오른쪽 열림 / 양쪽 열림 / 실내 방향 / 현관 방향 / 상부 행거 / 바닥 레일 / 매립 레일 검토 / 고정창 포함 / 가벽 포함 / 유효 통과폭 기록
+중문 소재·유리|알루미늄 / 스틸 / 목재·목질계 / 투명 유리 / 브론즈·그레이 색유리 / 미스트·불투명 / 세로 골 유리 / 망입 / 강화·접합 사양 확인 / 솔리드 하부 패널
+중문 손잡이·기능|매립 손잡이 / 바 손잡이 / 프레임 일체형 / 소프트클로징 / 댐퍼 / 모헤어·기밀재 / 자동 센서 / 손끼임 방지
+현관장·신발장|기존 유지 / 바닥형 / 하부 띄움 / 천장까지 / 낮은장 / 오픈 선반 / 우산·청소기 칸 / 부츠 칸 / 벤치 일체 / 전신거울 / 하부 센서등 / 제습·통풍
+현관 단차·편의|기존 단차 유지 / 단차 재설계 / 신발 벗는 자리 확대 / 디딤판·마감석 / 미끄럼 저감 타일 / 매트 매립 / 손잡이·난간
+# 천장·목공·몰딩|전체·공통|process,molding,acoustic
+천장 모양|기존 유지 / 평천장 / 우물천장 유지·신설 / 우물천장 평탄화 / 부분 단내림 / 전체 단내림 / 노출천장 / 간접조명 박스 / 커튼 박스
+천장 몰딩|기존 유지 / 표준 몰딩 / 슬림 평몰딩 / 계단·장식 몰딩 / 마이너스 몰딩 / 무몰딩 / 부분별 혼합
+천장 재료·보강|석고보드 / 방습 보드 / 차음 보드 / 목재·루버 / 점검구 / 실링팬 보강 / 펜던트 보강 / 에어컨 매립 공간 확보 / 커튼 레일 보강
+거실 벽체·TV|기존 아트월 유지 / 철거 후 평탄화 / 도배 / 도장 / 필름 / 타일·석재 / 목재 패널·루버 / TV 매립 박스 / 벽걸이 보강 / 무타공 설치 검토 / 배선 은폐·점검구
+장식 목공|아치 개구부 / 니치 / 갤러리 레일 / 템바보드·루버 / 웨인스코팅 / 벽 선반 보강 / 벽부착 가구 보강 / 코너 라운딩
+# 실내문·문틀|전체·공통|door,molding
+문과 문틀 공사 범위|기존 유지 / 문짝만 교체 / 문짝 필름·도장 / 문틀만 보수·필름 / 문짝·틀 교체 / 문 철거 후 오픈 / 문 신설 / 위치 이동
+문 개폐·구성|일반 여닫이 / 포켓 슬라이딩 / 노출 레일 미닫이 / 양개 / 접이문 / 유리문 / 환기 루버문 / 히든도어 / 안전문
+문 열림과 치수|좌경첩 / 우경첩 / 실내로 열림 / 실외로 열림 / 통과폭 확대 / 천장까지 높이 / 하부 틈·환기 확인
+문짝 재료·표면|ABS / 멤브레인 / HPL·LPM / 필름 / 도장 / 원목·무늬목 / 유리 삽입 / 벽 마감과 일치
+문선 마감|기존 유지 / 기본 문선 / 슬림 9 mm 예시 / 슬림 12 mm 예시 / 기타 폭 기입 / 무문선·히든틀 / 문틀 색상 지정
+문턱·하드웨어|문턱 유지 / 문턱 제거·바닥 연결 / 욕실 방수턱 / 레버 / 손잡이 매입 / 자석 래치 / 잠금 / 숨은 경첩 / 도어스토퍼 / 자동 하부 씰 / 손끼임 방지
+# 전기·통신·스마트홈|전체·공통|process,electric,smart
+배선·분전반|기존 배선 유지 / 부분 재배선 / 전체 교체 검토 / 분전반 교체·이설 검토 / 회로 분리 / 접지 확인 / 증설 가능 여부 확인 / 예비 배관|design|증설과 회로·접지는 설치할 기기의 제조사 요구사항과 현장 전기 조건을 바탕으로 전문업체가 확인합니다.
+가전 전용 전원|인덕션 / 오븐 / 식기세척기 / 냉장고·김치냉장고 / 세탁기·건조기 / 에어컨 / 정수기 / 비데 / 욕실 복합환풍기 / 로봇청소기
+콘센트 형태|그대로 사용 / 증설 / 이설 / 철거 / 1구 / 2구 / 다구 / USB-A·C / 방적 커버형 / 바닥형 / 가구 매립 / 팝업·슬라이딩 / 접지
+콘센트 배치|TV 벽 / 소파 옆 / 침대 양쪽 / 책상 위·아래 / 화장대 / 주방 상판 / 아일랜드 / 냉장고장 / 세면대 주변 / 세탁실 / 로봇청소기 도크 / 베란다 / 창가 전동 커튼
+스위치 형태·위치|기존 유지 / 추가 / 이동 / 다구 스위치 / 양방향 제어 / 현관 일괄 소등 / 침대 옆 제어 / 카드·터치 / 장면 버튼 / 스마트 스위치
+통신·미디어|LAN 포트 / 공유기·AP 위치 / 통신 단자함 정리 / TV 동축 / 매립 HDMI 관로 / 빔프로젝터 전원·신호 / 스피커 배선 / CCTV·홈캠 전원 / 인터폰·월패드
+자동화·센서|설치 안 함 / 조명 장면 / 재실·동작 센서 / 문열림 센서 / 누수 감지 / 전동 커튼 / 온도 제어 / 도어락 연동 / 월패드 호환 확인 / 허브 방식 검토
+전기 위치·높이 도면 확정|완성 바닥 기준 높이 표기 / 가구 배치와 위치 대조 / 스위치와 문 열림 확인 / 콘센트와 가전 뒤 깊이 확인 / 전기차단·일괄소등 제외 회로 협의|design
+# 조명·스위치 회로|거실|lighting,lighting2,process,kitchenstyle
+기본 조명 구성|기존 유지 / 직부등 중심 / 다운라이트 중심 / 간접등 중심 / 직부등 + 간접등 / 다운라이트 + 간접등 / 여러 방식을 혼합 / 고정 등기구 미설치|brief|공간마다 원하는 조명 조합을 골라 두세요. 배치와 회로는 가구 위치·천장 여유에 맞춰 설계합니다.
+등기구 설치 수량|한 개 / 복수 / 벽마다 배치 / 줄 배치 / 격자 배치 / 구역별 배치 / 도면에 수량·간격 기록
+등기구 종류|직부형 평판등 / 매입 다운라이트 / 표면 부착 다운라이트 / 매입 라인 조명 / 노출 라인 조명 / 트랙·레일 스폿 / 펜던트 / 벽등 / 코너·계단등 / 스탠드 / 일체형 실링팬 조명
+간접조명 여부|미설치 / 설치 / 기존 유지 / 기존 철거|brief
+간접조명 위치|우물천장 안쪽 / 단내림·코브 / 천장 모서리 / 커튼 박스 / TV 벽 / 헤드보드 / 상부장 하부 / 신발장 하부 / 거울 뒤 / 니치·선반 / 걸레받이 라인
+빛의 역할·방향|전체 밝기 / 식탁 집중 / 조리대 작업등 / 독서등 / 벽 비춤 / 그림·오브제 강조 / 야간 유도등 / 눈부심 저감
+색온도|2200 K / 2700 K / 3000 K / 3500 K / 4000 K / 5000 K / 6500 K / 색온도 조절형 / 샘플 보고 결정
+광원·마감 사양|교체형 전구 / 일체형 LED 모듈 / 깊은 매입형 / 확산 커버 / 스폿·좁은 배광 / 넓은 배광 / 고연색 제품 검토 / 습기 대응 등기구 / 수량·루멘·타공 지름 기입
+점등 그룹·제어|전체 한 회로 / 메인·간접 분리 / 중앙·가장자리 분리 / 좌우 또는 구역별 분리 / 식탁·조리대 분리 / 현관·복도 센서 / 디밍 / 색온도 전환 / 스마트 장면
+설치 위치·유지보수|평면도에 중심·간격 표시 / 가구 기준 센터 맞춤 / 실링팬과 간섭 확인 / 창·커튼과 간섭 확인 / 전원장치 점검 가능 위치 / 회로별 밝기 확인
+# 냉난방·환기·배관|전체·공통|process,hvac,vent,bath,robot
+에어컨 공사|기존 유지 / 미설치 / 벽걸이형 / 스탠드형 / 2-in-1 / 천장형 시스템 / 덕트형 검토 / 배관만 선시공
+실내기·실외기 위치|거실 / 주방 / 안방 / 각 방 / 기존 실외기실 / 외부 배치 가능 확인 / 점검구 / 단내림 / 실외기 환기 / 응축수 배수 경로
+난방|기존 유지 / 난방 배관 부분 교체 / 전체 교체 검토 / 확장부 연장 / 분배기 교체 / 각방 온도조절 / 보일러 교체 검토 / 라디에이터 유지·교체 / 바닥 난방 보강
+환기|기존 유지 / 기존 필터·덕트 정비 / 전열교환기 교체 / 전열교환기 신설 검토 / 벽부형 환기 / 욕실 국소배기 / 주방 후드 배기 / 급·배기 위치·점검구
+급수·급탕·배수|기존 유지 / 노후관 부분·전체 교체 검토 / 급수·배수 위치 이설 / 세탁기 추가 / 정수기 라인 / 냉장고 급수 / 아일랜드 급수·배수 / 외부 수전 / 차단밸브 접근 / 로봇청소기 직배수 검토
+가스·연통|유지 / 가스레인지 철거 후 마감 협의 / 위치 변경 가능 확인 / 가스 밸브 접근 / 보일러 연통 확인 / 경보기·차단기 검토
+실링팬|미설치 / 거실 설치 / 침실 설치 / 방별 설치 / 조명 일체형 / 조명 분리형 / 리모컨 / 벽 스위치 / 천장 높이·보강·조명 간섭 확인
+# 주방 배치·아일랜드|주방|kitchen,kitchenstyle,island
+주방 공사 범위|기존 유지 / 문짝·필름 리폼 / 상판만 / 싱크볼·수전만 / 하부장만 / 주방가구 전체 / 배치·설비 변경
+주방 레이아웃|일자형 / ㄱ자형 / ㄷ자형 / 병렬형 / 대면형 / 독립 주방 / 오픈형 / 반개방형
+싱크·가열대 배치|기존 위치 유지 / 싱크 이동 / 쿡탑 이동 / 창을 보고 조리 / 거실을 보고 조리 / 보조 조리대 / 보조 싱크
+아일랜드 설치 여부|미설치 / 기존 유지 / 기존 개조 / 고정형 설치 / 이동식 카트·테이블 / 반도형 설치|brief|설치 의향과 사용 목적을 먼저 정하고, 통로와 전기·급배수는 실측 뒤 확인하세요.
+아일랜드 용도|조리대 / 수납장 / 식사 겸용 / 바 형태 / 싱크 포함 / 쿡탑 포함 / 식기세척기 포함 / 가전·정수기 포함
+아일랜드 형태|직사각 / 라운드·곡면 / 일자·상판 연장 / 하부 오픈 / 측면까지 상판 마감 / 양면 수납 / 한쪽 수납 / 무릎 공간 확보
+아일랜드 치수·좌석|주방 상판과 같은 높이 / 식탁 높이 연장 / 바 높이 / 1석 / 2석 / 3석 / 4석 이상 / 폭·깊이·높이·오버행 기입 / 양옆 통로·문 열림 확인 / 식기세척기·냉장고와 동시에 열었을 때 통로 확인
+아일랜드 전기·급배수|전기 없이 사용 / 측면 콘센트 / 상판 매립 콘센트 / 바닥 배관 검토 / 쿡탑 전용회로 / 후드 설치 / 급수·배수 검토 / 펜던트 중심 위치
+식탁 배치|독립 식탁 / 아일랜드 겸용 / 아일랜드 직렬 연결 / 아일랜드 직각 연결 / 벽 고정 접이식 / 벤치형 / 크기·좌석·이동 동선 확인
+# 주방 가구·상판·가전|주방|kitchen,kitchenstyle,island,dishwasher,induction,robot
+상부·하부 구성|상부장 전체 / 일부 상부장 / 상부장 없음 / 오픈 선반 / 키큰장 / 서랍형 하부장 / 여닫이 하부장 / 유리 진열장
+문짝·손잡이|PET / LPM·HPL / 도장 / 무늬목 / 원목 / 유리 / 무광 / 유광 / 노출 손잡이 / 찬넬·매입 / 푸시 오픈 / 엣지 손잡이
+상판 소재|아크릴계 인조대리석 / 엔지니어드 스톤 / 세라믹·포세린 / 천연석 / 스테인리스 / 라미네이트 / 원목 / 타일
+상판 사양|두께·높이 기입 / 직각 모서리 / 라운드 모서리 / 물막이 턱 / 짧은 뒤턱 / 뒤턱 없음 / 이음매 위치 / 벽·측면 연장 / 싱크·쿡탑 타공
+주방 벽·백스플래시|타일 / 상판 소재 연장 / 유리 패널 / 스테인리스 / 방수 패널 / 도장 / 부분 시공 / 벽 전면
+싱크볼|싱글볼 / 더블볼 / 보조볼 / 사각 / 라운드 / 언더마운트 / 상부 걸침형 / 일체형 / 스테인리스 / 복합재
+수전·정수|일반 혼합수전 / 인출형 / 터치·센서 / 벽수전 / 정수기 별도 파우셋 / 정수수전 일체 / 언더싱크 정수기 / 수전·싱크 타공 위치
+쿡탑·후드|가스 / 인덕션 / 하이라이트 / 혼합형 / 빌트인 후드 / 벽부형 / 아일랜드 후드 / 다운드래프트 / 외부 배기 / 순환형 검토 / 덕트 경로
+가전 설치|냉장고 프리스탠딩 / 빌트인 냉장고 / 김치냉장고 / 식기세척기 빌트인 / 식기세척기 독립형 / 오븐·전자레인지장 / 밥솥 인출 선반 / 와인셀러 / 기존 모델 재사용 / 급배수 직결형 로봇청소기 / 물통형 로봇청소기
+수납 내부|커틀러리 트레이 / 냄비 서랍 / 양념 인출망 / 코너 회전장 / 팬트리 인출장 / 분리수거함 / 청소도구 칸 / 조명 내장 / 키큰장 리프트업
+가전·가구 치수|모델명·실측 치수 / 문 열림 각도 / 손잡이 돌출 / 통풍 여유 / 급수·배수·전원 위치 / 교체·수리 공간 / 설치 주체 확인 / 걸레받이·하부장과 가전 문 간섭 확인
+기기 모델별 설치 조건 확인|식기세척기 걸레받이·호스 통과 / 인덕션 타공과 전원 조건 / 냉장고 방열·문 열림 / 오븐 방열·점검 여유 / 직배수 로봇청소기 급수·배수·전원 / 모델별 업체 설치 가능 여부 확인|design
+# 욕실·방수·도기|공용욕실|bath,bathcatalog,tile
+욕실 시공 범위|그대로 사용 / 도기·수전만 / 실리콘·줄눈 보수 / 벽·바닥 덧방 가능 확인 / 부분 철거 / 전체 철거 후 재시공 / 배치 변경
+습식·건식 구획|전체 습식 / 샤워 구역 분리 / 세면대·변기 구역 물 튐 분리 / 외부 건식 세면대 / 샤워 커튼 / 반벽 / 파티션 없음
+욕조·샤워부스|욕조 없음 / 매립 욕조 / 독립형 욕조 / 반신욕 욕조 / 샤워만 / 고정 유리 파티션 / 여닫이 부스 / 슬라이딩 부스 / 욕조 스크린
+방수·바탕|기존 상태 확인 / 기존층 철거 후 재시공 / 바닥·벽 턱 보강 / 샤워벽 방수 범위 확인 / 시멘트계 / 도막형 / 시트형 검토 / 코너·관통부 보강 / 담수시험 확인|design|방수재와 시공 범위, 확인 방법은 기존 상태와 공법에 따라 시공업체와 협의하세요.
+배수·단차|원형·사각 유가 / 선형 배수구 / 타일 삽입형 유가 / 트랩·악취 차단 / 배수구 이설 가능 확인 / 샤워 단차 / 무단차 가능 확인 / 구배 확인 / 문턱 높이 기입
+양변기|기존 유지 / 투피스 / 원피스 / 벽걸이 / 일체형 비데 / 비데 별도 설치 / 비데 없이 사용 / 세정 버튼·전원·배수 위치 확인
+세면대|벽걸이 / 반다리 / 긴다리 / 하부장형 / 탑볼 / 언더볼 / 상판 일체형 / 2인용 / 젠다이 연장
+세면·샤워 수전|일반 세면 수전 / 높은 수전 / 벽매립 / 일반 샤워 수전 / 해바라기 샤워 / 온도조절 수전 / 욕조 겸용 / 핸드샤워 / 매립 선반과 조합
+거울·장·선반|일반 거울 / LED 거울 / 김서림 방지 / 슬라이딩 거울장 / 여닫이 거울장 / 오픈 선반 / 매립 니치 / 조적 젠다이 / 하부장
+천장·환기·난방|기존 유지 / 평형 천장 / 돔형 / 방습 마감 / 점검구 / 일반 환풍기 / 역류 방지형 검토 / 온풍·제습 복합기 / 바닥 난방 검토 / 수건 워머
+액세서리·안전|수건걸이 / 휴지걸이 / 비누·샴푸 선반 / 옷걸이 / 청소건 / 안전손잡이 / 샤워 의자 / 화장지 여분 수납 / 방적 전기기구 / 야간 유도등
+# 타일·줄눈·석재|전체·공통|tile,bath,process
+타일 적용 면|현관 바닥 / 주방 벽 / 욕실 바닥 / 욕실 벽 / 발코니 바닥 / 거실 바닥 / 아트월 / 계단 / 부분 포인트
+타일 재질|도기질 / 자기질 / 포세린 / 세라믹 대판 / 모자이크 / 유리 / 테라조 / 천연석 / 인조석
+표면·크기|무광 / 유광 / 반광·래핑 / 요철·미끄럼 저감 / 정방형 / 직사각형 / 대형 슬래브 / 소형 모자이크 / 정확한 규격 기입
+패턴·나누기|정렬 / 벽돌 쌓기 / 헤링본 / 세로 시공 / 사선 / 모듈 혼합 / 벽·바닥 줄눈 정렬 / 시작선·재단 위치 표시
+시공·모서리|기존 유지 / 철거 후 시공 / 바탕 상태 확인 후 덧방 / 졸리컷 / 금속·PVC 코너비드 / 단품 코너 타일 / 미장·방수 포함 여부
+줄눈·실란트|시멘트계 줄눈 / 에폭시계 줄눈 / 기존 줄눈 보수 / 타일 유사색 / 대비색 / 줄눈 폭 기입 / 실리콘 색·방곰팡이 사양 / 코너·이종재 접합
+# 바닥·걸레받이|전체·공통|floor,molding,baseboard
+바닥재 공사 방식|유지 / 부분 보수 / 샌딩·재도장 / 철거 후 교체 / 바탕 확인 후 덧시공 / 공간별 다른 재료
+바닥재 종류|강마루 / 강화마루 / 합판마루·온돌마루 / 원목마루 / PVC 시트 장판 / LVT 데코타일 / SPC / 타일 / 천연석 / 코르크 / 카펫·카펫타일 / 에폭시·미장 마감
+바닥 패턴·표면|일자 / 랜덤 엇갈림 / 헤링본 / 쉐브론 / 타일형 / 광폭 / 라이트 우드 / 중간·다크 우드 / 스톤 패턴 / 무광·유광 / 제품 번호·규격 기록
+바닥 접합·성능|접착 시공 / 클릭·떠붙임 / 용접·이음 사양 / 문턱 아래 분리 / 연속 시공 / 금속·목재 재료분리대 / 무단차 검토 / 난방 적합성 / 미끄럼·충격·오염 성능
+걸레받이 설치 방식|기존 유지 / 기존 보수 / 신규 돌출형 / 벽과 면을 맞춘 매립형 / 섀도 갭·마이너스형 / 미설치·무걸레받이 / 공간별 혼합|brief|무걸레받이·매립형은 바닥재 끝 처리와 벽 하부 평탄도, 보수 방법을 업체와 확인하세요.
+걸레받이 높이|20 mm 예시 / 30 mm / 40 mm / 50 mm 예시 / 60 mm 예시 / 80 mm 예시 / 100 mm 예시 / 기타 치수 직접 추가|design|높이는 규격 예시입니다. 제조사 제품, 벽·바닥 접합, 문선 조합에 따라 선택하세요.
+걸레받이 소재·색|MDF 필름 래핑 / 도장 목재·MDF / 원목 / PVC / 알루미늄 / 타일·석재 / 벽과 동일색 / 바닥과 동일색 / 문선과 동일색 / 대비색
+걸레받이 접합·형태|평형 / 라운드 / 계단형 / 사선형 / 두께·돌출폭 기입 / 문선과 만나는 곳 상세 / 코너 이음 / 하부 틈·실란트 확인
+# 벽·벽지·도장·필름|전체·공통|wallpaper,film,tile
+벽·천장 주 마감|기존 유지 / 합지벽지 / 실크벽지 / 기능성 벽지 / 도장 / 인테리어 필름 / 타일·석재 / 목재·무늬목 / 패브릭·흡음 패널 / 미장 / 혼합
+도배 범위·방식|천장 포함 / 벽만 / 방 한 면 / 전체 실내 / 공간별 다른 벽지 / 기존 벽지 철거 / 바탕 보수 / 부직포·초배 방식 협의
+도장 질감·광택|수성 페인트 / 기능성 페인트 / 무광 / 반광 / 유광 / 질감 도장 / 탄성코트 / 컬러 샘플 후 확정 / 퍼티·샌딩 포함
+필름 적용 위치|방문 / 문틀·문선 / 창틀 / 현관문 실내면 / 주방가구 / 붙박이장 / 걸레받이·몰딩 / 벽 패널 / 목재·솔리드·석재·메탈·패브릭 패턴
+포인트 벽|포인트 없음 / 한 면 컬러 / 벽지 패턴 / 타일 / 석재 / 미장 / 템바보드·루버 / 웨인스코팅 / 자석·칠판 마감
+마감재 성능·유지관리|오염 제거 용이 / 저광택 / 발수·내수 / 내스크래치 / 습기 대응 / 방출등급 자료 확인 / 보수·재도장 가능 여부 확인
+색·샘플 결정|공간 전체 동일 / 천장·벽 분리 / 벽별 구분 / 웜톤 / 쿨톤 / 뉴트럴 / 자연광·조명에서 샘플 확인 / 제조사·품번 기입
+# 맞춤가구·수납|전체·공통|built,process
+수납 종류|기존 유지 / 기성 가구 / 붙박이장 / 오픈 시스템장 / 팬트리 / 거실장·서재장 / 화장대 / 벤치 수납 / 침대 하부 / 다용도실 선반
+가구 배치와 설치|천장까지 제작 / 걸레받이 위로 맞춤 / 하부 띄움 / 벽 고정 / 가구 전도 방지 / 공간 분리 가구 / 독립 이동형 / 로봇청소기 진입 높이
+가구 문 형태|오픈 / 여닫이 / 슬라이딩 / 폴딩 / 리프트업 / 플랩다운 / 미닫이 유리 / 거울 도어 / 소프트클로징
+내부 수납|긴옷봉 / 이중 행거 / 선반 / 인출 서랍 / 바지걸이 / 액세서리 트레이 / 의류관리기 칸 / 짐칸·캐리어 / 환기구 / 내부 조명
+가구 사양·마감|MDF / 파티클보드 / 합판 / 원목 / PET / LPM·HPL / 무늬목 / 도장 / 필름 / 뒤판·선반 두께 기입 / 자재 방출등급 확인
+공간별 모듈|TV장 / 침대 헤드보드 / 책상·책장 / 벽면 선반 / 화장대 / 홈바 / 로봇청소기 도크 / 청소기 충전장 / 반려용품 수납
+# 발코니·세탁·다용도실|다용도실|process,window,built
+바닥·벽·천장|기존 유지 / 타일 교체 / 미끄럼 저감 / 조립 데크 / 배수구·구배 개선 / 벽 도장 / 탄성코트 검토 / 단열·결로 원인 보완 / 방수 범위 확인
+세탁기·건조기 배치|나란히 / 직렬 적층 / 세탁건조 일체형 / 기존 위치 유지 / 위치 이동 / 별도 세탁 싱크 / 세제 선반 / 건조대
+다용도실 설비|급수전 / 배수 트랩 / 기기별 전원 / 환풍·제습 / 천장 빨래건조대 / 전동 건조대 / 싱크·수전 / 실외기 환기·점검 / 홈바·보조 주방
+팬트리·청소장|오픈 선반 / 시스템 랙 / 문 달린 수납 / 깊이 조절 선반 / 청소기 충전 / 분리수거 / 공구·계절용품 수납
+외부·테라스|기존 유지 / 데크 / 논슬립 외부 타일 / 차양·어닝 검토 / 외부 수전 / 방우 콘센트 / 실외 조명 / 배수 정비 / 난간 점검
+# 거실·침실·창 가림|거실|built,curtain,lighting
+거실 생활 배치|소파 중심 / TV 없는 거실 / 홈시어터 / 서가·독서 / 식탁 겸용 / 놀이 공간 / 수납 벽 / 이동식 가구
+방 용도·가구 배치|침실 / 아이방 / 서재 / 드레스룸 / 게스트룸 / 운동·취미 / 홈스튜디오 / 복합 용도 / 가구 중심·치수 기록
+침대·서재 편의|헤드보드 / 양측 벽등 / 침대 옆 스위치 / 양측 콘센트 / 호텔형 협탁 / 벽 책상 / 높이조절 책상 / 모니터·랜 배선 / 빔프로젝터
+커튼·블라인드 종류|없음 / 속커튼 / 암막 커튼 / 이중 커튼 / 롤스크린 / 콤비 블라인드 / 우드·알루미늄 베네시안 / 허니콤 / 로만쉐이드 / 버티컬 / 셔터
+커튼 설치·제어|천장 레일 / 커튼 박스 매립 / 벽부착 봉 / 싱글 레일 / 더블 레일 / 수동 / 전동 / 전원 선시공 / 창 손잡이·냉난방 간섭 확인
+# 안전·접근성·특수 공간|전체·공통|law,door,acoustic,smart
+이동 접근성|문턱 제거 검토 / 완만한 경사 / 통과폭 확보 / 미끄럼 저감 / 휠체어 회전 공간 / 낮은 스위치·수납 / 손잡이·난간 / 야간 동선등
+어린이 안전|모서리 라운드 / 문 손끼임 방지 / 창 열림 제한 / 가구 벽 고정 / 콘센트 보호 / 끈 없는 블라인드 / 샤워 온도 조절
+반려동물|미끄럼 저감 바닥 / 펫도어 / 캣워크·캣타워 보강 / 생활구역 구분문 / 화장실 위치·환기 / 세척 공간 / 펫캠 전원
+안전 설비·피난|감지기 위치 확인 / 스프링클러 간섭 검토 / 가스·CO 감지 검토 / 누수 감지 / 소화기 위치 / 대피 공간·경량칸막이 유지 조건 확인 / 피난 동선 확보
+특수 공간|홈짐 완충 바닥 / 음악실 방음·흡음 / 홈시어터 암막·배선 / 취미실 작업등·환기 / 복층 계단·난간 보수 / 다락 수납·환기
+# 현장 실측·착공 준비|전체·공통|contractguide,condo,demolition,asbestos,process
+가구 배치 기준 실측|반입 경로와 문·엘리베이터 치수 / 가구 배치 후 유효 통로 / 천장 보·단차 / 창·문 개구부 / 주요 벽 길이·직각 / 준공 도면과 차이 기록|design
+철거 전 기존 상태 기록|보존할 가구·창호·설비 표시 / 누수·균열·찍힘 사진 / 공용부 기존 손상 사진 / 전기·수도·가스 위치 확인 / 발견 사항을 업체에 공유|pre
+관리사무소·공사 승인 확인|관리규약·공사 가능 시간 / 세대 공지·동의 필요 여부 / 관리사무소 공사 접수 / 구청 허가·신고 대상과 담당 확인 / 엘리베이터 사용 예약 / 관리 보증금·사용료 및 반환 조건 확인|pre
+공용부 보양·이웃 피해 대응|승강기 및 복도 보호 범위 / 현장 출입·열쇠 관리 / 소음 큰 작업 일정 공유 / 민원 창구 / 이웃·공용부 파손 발생 시 기록·처리 담당 / 철거 반출·폐기물 처리 동선|pre
+공사 전 설비·위험 자재 확인|전기·수도·가스 차단과 복구 담당 / 소방·피난 설비 보호 / 석면조사 대상 여부와 담당 확인 / 임시 전기·수도 사용 조율|pre
+공정 시작 조건·발주 일정|창호·제작가구·가전 납기 확인 / 승인 도면과 자재표 공유 / 입주·이사·가전 설치 역산 / 건조·양생 일정 반영 / 작업 중 거주 시 출입 구역·분진 차단 협의|pre
+# 견적·시공 인계|전체·공통|prepare,process,contractguide,consumer
+별도 구매·설치 분담|시공사 공급·시공 / 직접 구매·시공사 설치 / 구매처 설치 / 기존 제품 이전 설치 / 철거·수거 별도 / 반입일·현장 보관 협의
+견적 표시 단위|공간별 / 공정별 / 자재·노무 분리 / 수량·단위 / 제조사·품번 / 표준안·대안 별도 / 부가비용 포함 여부 / 기존 철거·폐기·보양 포함 여부
+결정 확정 시점|견적 상담 / 계약 전 / 철거 후 현장 확인 / 배관·배선 전 / 목공 전 / 자재 발주 전 / 가구 실측 후 / 업체와 일정 협의
+업체에 요청할 자료|기존·변경 평면도 / 전기·조명 배치도 / 천장도 / 가구 상세·입면 / 타일 나누기도 / 자재 샘플·목록 / 현장 사진 / 공정표 / 변경 내역 기록
+시공·인수 범위|관리사무소 협의 / 이웃·공용부 보양 / 폐기물 반출 / 가전·가구 반입 조율 / 입주 청소 / 시운전 / 하자 공동 확인 / 보증 조건·연락처 / 남은 자재 인계 / 철거·신규 설치 사이 임시 사용 가능 여부 확인|contract|아래 작업을 누가 맡는지 계약 전에 정하세요. 실제 결과 확인은 준공·하자 항목에서 기록할 수 있어요.
+계약 상대와 현장 책임|계약 사업자명·공사 주소 확인 / 해당 공사 등록·자격 확인 / 현장 책임자와 연락처 / 공정별 시공 담당 / 자재 직접 구매 시 설치·하자 책임 / 공사 중 파손 대응 책임
+견적에 빠지기 쉬운 비용|부가세 / 양중·운반 / 보양·폐기 / 관리사무소 비용 / 바탕면 보수 / 철거 후 드러나는 설비 문제 / 설치 부속·타공비 / 재사용 부품 이전·복구
+계약 도면·사양 확정본|공간·공정별 포함과 제외 / 수량·단위·자재 모델 및 색상 / 확정 도면 버전 / 사양과 견적 대조 / 유사 자재 대체 시 사전 승인 / 교체품의 성능·비용 비교
+추가·변경공사 승인|변경 사유·요청자 기록 / 작업 전 금액과 일정 영향 확인 / 서면 승인 방식 합의 / 철거 후 미확정 부분의 처리 기준 / 변경·취소 내역과 증감액 보관
+대금·일정·보수 조건|착공일·준공일 / 단계별 지급 조건 / 준공 검수와 잔금 일정 / 지연·중단·해지 처리 / 증빙 발행 / 공정별 보수 기간과 접수 절차
+# 공사 중 중간검수|전체·공통|process,wet,bath,contractguide
+철거 직후 현장 재확인|숨은 누수·결로·균열 확인 / 배관·분전반·기존 방수 상태 확인 / 보존 부위 손상 확인 / 재실측 / 변경 범위·추가 비용·일정 서면 확인
+배관과 방수 덮기 전 확인|교체·이설한 급수·배수·난방 배관 사진 / 해당 배관 시험 결과 확인 / 욕실 방수 범위·모서리·관통부 기록 / 담수시험 방법·결과 기록 / 보완 후 재확인|work|시공업체에 해당 공정의 시험 방법과 날짜, 결과를 요청하세요. 필요한 시험은 공법과 현장 조건에 따라 달라져요.
+전기·목공 막기 전 확인|조명·스위치·콘센트 위치 도면 대조 / 전용회로·차단기 표시 / TV·실링팬·커튼 보강 위치 / 매립 배선·보강 사진 / 천장 위 설비 점검구 / 접지·회로 시험 필요 여부 확인|work|덮고 나면 보이지 않는 부분은 위치가 드러나도록 사진이나 도면에 남겨 두세요.
+마감 전 샘플·첫 시공 확인|실제 조명 아래 샘플 비교 / 벽지·타일·줄눈 실물 승인 / 타일 줄눈 시작선·재단 위치 / 걸레받이와 문선 접합 / 마루 진행 방향 / 코너·단차 상세 확인
+창호·가구 설치 전 재실측|창호 개구부·유리 사양 확인 / 가구 치수와 벽·바닥 상태 / 문과 손잡이 간섭 / 가전·배선·배관 위치 / 특주품 확정 치수 기록
+현장 진행·자재 대조|반입 자재 라벨과 승인 품번 일치 / 공정 사진과 확인 날짜 기록 / 예정·실제 일정 대조 / 미해결 항목과 담당·완료 예정일 / 합의한 변경 내용 최신 도면에 반영
+# 준공·하자 확인|전체·공통|process,consumer,wet
+완료 범위·마감 품질 대조|계약·변경 내역의 누락·오시공 / 마루 들뜸·삐걱임 / 도배 이음·기포 / 필름 모서리 들뜸 / 타일 깨짐·줄눈 / 걸레받이 틈·단차 / 공사 전 보존 부위 손상 확인
+작동 점검·시운전|조명 회로·디밍·센서 / 콘센트·차단기 표시 / 냉난방·환기·후드 / 가전 연결과 작동 / 창호·중문·잠금·도어락 / 가구 서랍·문 간섭
+물 사용·배수 확인|온수·냉수와 수압 / 세면대·싱크 하부 누수 / 욕실·발코니 물고임 / 변기·배수구 작동 / 젖은 구역과 문턱 주변 넘침 여부
+하자 기록·재확인|공간별 사진과 발견일 / 계약 사양과 비교 / 보수 담당·기한 합의 / 보수 후 작동·마감 재확인 / 보수 미완료와 정산 처리 기록
+인수 자료·관리 방법|최종 도면·매립 사진 / 설치 제품 모델명·설명서·보증서 / 차단기·급수밸브·점검구 위치 / 비상 연락처·하자 접수 / 예비 타일·벽지·마루 및 색상 정보 / 열쇠·출입 정보 인계
+</script>
+<script src="./supabase.min.js"></script>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
