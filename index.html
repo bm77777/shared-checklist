@@ -115,6 +115,12 @@ summary { cursor: pointer; color: var(--green); font-weight: 650; }
 .reference-photos { margin: 0 0 15px; padding: 13px 15px; border: 1px solid var(--room-accent, var(--line)); border-radius: 10px; background: var(--paper); }
 .reference-photos > summary { font-size: 1rem; }
 .reference-photos .photo-section { margin-top: 10px; }
+.room-memo { margin: 0 0 18px; padding: 13px 15px; border: 1px solid var(--room-accent, var(--line)); border-radius: 10px; background: var(--paper); }
+.room-memo h3 { margin: 0 0 8px; font-size: 1rem; }
+.room-memo textarea { display: block; block-size: 154px; min-block-size: 120px; overflow-y: auto; }
+.room-memo .note-status { min-height: 1.5em; margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.room-memo .inline { margin-top: 5px; }
+.room-memo .inline[hidden] { display: none; }
 .photo-paste { min-height: 44px; padding: 11px; border: 1px dashed #8b9c8e; border-radius: 7px; background: #fff; color: var(--muted); font-size: .86rem; cursor: text; resize: none; }
 .photo-status { min-height: 1.4em; margin: 0; }
 .photo-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin: 4px 0 0; }
@@ -242,6 +248,16 @@ button.note-save { width: fit-content; }
       <summary id="referencePhotosTitle">레퍼런스 사진</summary>
       <div id="referencePhotoTools"></div>
     </details>
+    <section id="roomMemo" class="room-memo" aria-labelledby="roomMemoTitle">
+      <h3 id="roomMemoTitle"><label for="roomMemoText">공간 메모</label></h3>
+      <textarea id="roomMemoText" maxlength="3000" placeholder="이 공간에서 하고 싶은 것, 상담 질문, 치수 등을 적어 두세요."></textarea>
+      <p id="roomMemoStatus" class="note-status hint" role="status">변경 내용은 자동 저장됩니다.</p>
+      <p id="roomMemoLatest" class="note-status hint" hidden></p>
+      <div id="roomMemoActions" class="inline" hidden>
+        <button id="roomMemoRetry" type="button">다시 저장</button>
+        <button id="roomMemoUseLatest" type="button" hidden>공유 메모 불러오기</button>
+      </div>
+    </section>
     <div class="toolbar">
       <label class="room-control">기록할 공간
         <select id="room"></select>
@@ -508,6 +524,6 @@ button.note-save { width: fit-content; }
 인수 자료·관리 방법|최종 도면·매립 사진 / 설치 제품 모델명·설명서·보증서 / 차단기·급수밸브·점검구 위치 / 비상 연락처·하자 접수 / 예비 타일·벽지·마루 및 색상 정보 / 열쇠·출입 정보 인계
 </script>
 <script src="./supabase.min.js"></script>
-<script type="module" src="./app.js"></script>
+<script type="module" src="./app.js?v=space-memo-1"></script>
 </body>
 </html>

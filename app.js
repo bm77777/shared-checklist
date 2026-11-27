@@ -91,6 +91,7 @@ const photoDrafts = new Map();
 const pendingPhotoIds = new WeakMap();
 const savingPhotos = new Set();
 const noteDrafts = new Map();
+const roomMemoTimers = new Map();
 const pendingChoices = new Map();
 const privatePhotoUrls = new Map();
 let incomingDraw = 0;
@@ -108,11 +109,19 @@ const showSelection = document.getElementById("showSelection");
 const selectionView = document.getElementById("selectionView");
 const catalogView = document.getElementById("catalogView");
 const feedback = document.getElementById("feedback");
+const roomMemoText = document.getElementById("roomMemoText");
+const roomMemoStatus = document.getElementById("roomMemoStatus");
+const roomMemoLatest = document.getElementById("roomMemoLatest");
+const roomMemoActions = document.getElementById("roomMemoActions");
+const roomMemoRetry = document.getElementById("roomMemoRetry");
+const roomMemoUseLatest = document.getElementById("roomMemoUseLatest");
 let activeCategory = 0;
 let activeRoom = defaultRooms[0];
 let followCategoryRoom = true;
 let planRoom = "";
 let referenceRoom = "";
+let roomMemoRoom = "";
+let composingRoomMemo = false;
 const planRoomList = document.getElementById("planRoomList");
 const workspace = document.getElementById("workspace");
 const workspaceTitle = document.getElementById("workspaceTitle");
@@ -189,6 +198,103 @@ function sourceLink(key) {
 function recordKey(category, item, room) {
   return JSON.stringify([category.name, item.name, room]);
 }
+function roomMemoKey(room) {
+  return JSON.stringify(["@space", "@memo", room]);
+}
+function isRoomMemoKey(key) {
+  return key.startsWith('["@space","@memo",');
+}
+
+function refreshRoomMemo() {
+  if (!roomMemoRoom) return;
+  const key = roomMemoKey(roomMemoRoom);
+  const saved = data.entries[key];
+  const draft = noteDrafts.get(key);
+  const conflict = draft && !draft.saving && draft.revision !== (saved?.revision ?? 0);
+  const text = draft?.text ?? saved?.note ?? "";
+  if (!composingRoomMemo && roomMemoText.value !== text) roomMemoText.value = text;
+  roomMemoStatus.textContent = draft?.saving ? "저장 중…" : conflict
+    ? "두 사람이 같은 공간 메모를 수정했어요. 입력한 내용은 남겨 두었습니다."
+    : draft?.error || (draft ? "잠시 후 자동 저장됩니다." : saved?.revision ? "자동 저장됨" : "변경 내용은 자동 저장됩니다.");
+  roomMemoLatest.hidden = !conflict;
+  roomMemoLatest.textContent = conflict ? "현재 공유 메모 · " + (saved?.note || "비어 있음") : "";
+  roomMemoActions.hidden = !(conflict || (draft?.error && !draft.saving));
+  roomMemoRetry.textContent = conflict ? "내 메모로 바꾸기" : "다시 저장";
+  roomMemoUseLatest.hidden = !conflict;
+}
+
+function flushRoomMemo(key) {
+  clearTimeout(roomMemoTimers.get(key));
+  roomMemoTimers.delete(key);
+  const draft = noteDrafts.get(key);
+  if (!sessionHome || !draft || draft.saving || draft.revision !== (data.entries[key]?.revision ?? 0)) return;
+  if (!navigator.onLine) {
+    draft.error = "오프라인이에요. 연결되면 다시 저장합니다.";
+    refreshRoomMemo();
+    return;
+  }
+  void saveNote(key, false);
+}
+
+function queueRoomMemo(key) {
+  clearTimeout(roomMemoTimers.get(key));
+  roomMemoTimers.delete(key);
+  if (noteDrafts.has(key)) roomMemoTimers.set(key, setTimeout(() => flushRoomMemo(key), 650));
+}
+
+function setRoomMemo(room) {
+  if (!roomMemoText || room === roomMemoRoom) return;
+  if (roomMemoRoom) flushRoomMemo(roomMemoKey(roomMemoRoom));
+  roomMemoRoom = room;
+  composingRoomMemo = false;
+  roomMemoText.scrollTop = 0;
+  refreshRoomMemo();
+}
+
+function captureRoomMemo() {
+  if (!roomMemoRoom) return;
+  const key = roomMemoKey(roomMemoRoom);
+  const saved = data.entries[key];
+  const draft = noteDrafts.get(key);
+  if (roomMemoText.value === (saved?.note ?? "") && !draft?.saving) noteDrafts.delete(key);
+  else noteDrafts.set(key, { ...draft, text: roomMemoText.value, revision: draft?.revision ?? saved?.revision ?? 0, error: "" });
+  refreshRoomMemo();
+  if (!composingRoomMemo) queueRoomMemo(key);
+}
+
+roomMemoText?.addEventListener("compositionstart", () => {
+  composingRoomMemo = true;
+  if (roomMemoRoom) {
+    const key = roomMemoKey(roomMemoRoom);
+    clearTimeout(roomMemoTimers.get(key));
+    roomMemoTimers.delete(key);
+  }
+});
+roomMemoText?.addEventListener("compositionend", () => { composingRoomMemo = false; captureRoomMemo(); });
+roomMemoText?.addEventListener("input", event => {
+  if (event.isComposing) composingRoomMemo = true;
+  captureRoomMemo();
+});
+roomMemoText?.addEventListener("blur", () => {
+  if (roomMemoRoom && !composingRoomMemo) flushRoomMemo(roomMemoKey(roomMemoRoom));
+});
+roomMemoRetry?.addEventListener("click", () => {
+  const key = roomMemoKey(roomMemoRoom);
+  const draft = noteDrafts.get(key);
+  if (draft && draft.revision !== (data.entries[key]?.revision ?? 0)) void saveNote(key, true);
+  else flushRoomMemo(key);
+});
+roomMemoUseLatest?.addEventListener("click", () => {
+  const key = roomMemoKey(roomMemoRoom);
+  noteDrafts.delete(key);
+  clearTimeout(roomMemoTimers.get(key));
+  roomMemoTimers.delete(key);
+  refreshRoomMemo();
+  roomMemoText.focus();
+});
+window.addEventListener("online", () => {
+  for (const key of noteDrafts.keys()) if (isRoomMemoKey(key)) flushRoomMemo(key);
+});
 function entry(category, item, room) {
   return data.entries[recordKey(category, item, room)] ?? { choices: [], custom: [], note: "", revision: 0 };
 }
@@ -547,7 +653,9 @@ function renderCatalog() {
   const stage = stageFilter.value;
   const filterAcrossCategories = words.length > 0 || stage !== "";
   renderPlanState();
-  renderReferencePhotos(followCategoryRoom ? catalog[activeCategory].room : activeRoom);
+  const recordingRoom = followCategoryRoom ? catalog[activeCategory].room : activeRoom;
+  renderReferencePhotos(recordingRoom);
+  setRoomMemo(recordingRoom);
   categorySelect.value = activeCategory;
   Array.from(nav.children).forEach((node, index) => {
     const available = categoryApplies(catalog[index].name, planRoom);
@@ -587,23 +695,25 @@ function chosenRooms() {
   for (const room of [...defaultRooms, ...data.rooms]) {
     const groups = [];
     const images = photos[referencePhotoKey(room)] ?? [];
+    const memo = data.entries[roomMemoKey(room)]?.note ?? "";
     for (const category of catalog) {
       const items = category.items.map(item => ({ item, value: entry(category, item, room) }))
         .filter(({ value }) => value.choices.length || value.note.trim());
       if (items.length) groups.push({ category, items });
     }
-    if (groups.length || images.length) rooms.push({ room, groups, images });
+    if (groups.length || images.length || memo.trim()) rooms.push({ room, groups, images, memo });
   }
   return rooms;
 }
 function summaryFragment(rooms, editable = false) {
   const fragment = document.createDocumentFragment();
-  for (const { room, groups, images } of rooms) {
+  for (const { room, groups, images, memo } of rooms) {
     const section = make("section", undefined, "summary-room");
     section.append(make("h3", room));
     if (images.length) {
       section.append(make("h4", "레퍼런스 사진"), photoGallery(images, editable));
     }
+    if (memo?.trim()) section.append(make("h4", "공간 메모"), make("p", memo, "memo"));
     for (const { category, items } of groups) {
       const heading = make("h4", category.name);
       const list = make("ul");
@@ -659,9 +769,10 @@ function downloadFile(content, type, filename) {
 }
 function downloadSelection() {
   const lines = ["우리 집 인테리어 체크리스트"];
-  for (const { room, groups, images } of chosenRooms()) {
+  for (const { room, groups, images, memo } of chosenRooms()) {
     lines.push("", "[" + room + "]");
     if (images.length) lines.push("레퍼런스 사진 " + images.length + "장 (HTML에서 확인)");
+    if (memo.trim()) lines.push("공간 메모", memo);
     for (const { category, items } of groups) {
       lines.push("", category.name);
       for (const { item, value } of items) {
@@ -817,6 +928,12 @@ function resetSession() {
   savingPhotos.clear();
   pendingChoices.clear();
   noteDrafts.clear();
+  for (const timer of roomMemoTimers.values()) clearTimeout(timer);
+  roomMemoTimers.clear();
+  roomMemoRoom = "";
+  composingRoomMemo = false;
+  if (roomMemoText) roomMemoText.value = "";
+  if (roomMemoLatest) roomMemoLatest.textContent = "";
   activeCategory = 0;
   activeRoom = defaultRooms[0];
   followCategoryRoom = true;
@@ -874,6 +991,7 @@ function showRecords(rows) {
 
 function refreshCards() {
   for (const card of results.querySelectorAll(".card")) card.dispatchEvent(new Event("shared-records"));
+  refreshRoomMemo();
   updateCounts();
   if (!selectionView.hidden) renderSelection();
 }
@@ -948,18 +1066,22 @@ async function saveChoice(key, option, selected, custom) {
 
 async function saveNote(key, overwrite) {
   const draft = noteDrafts.get(key);
-  if (!draft || draft.saving) return;
+  if (!draft || draft.saving || !sessionHome) return;
   const revision = overwrite ? data.entries[key]?.revision ?? 0 : draft.revision;
   const api = sessionHome;
+  let savedSuccessfully = false;
   draft.saving = true;
   draft.error = "";
   refreshCards();
   try {
     const saved = await api.write("note", JSON.parse(key), { text: draft.text }, revision);
+    if (api !== sessionHome) return;
+    savedSuccessfully = true;
     const current = noteDrafts.get(key);
     if (current?.text === draft.text) noteDrafts.delete(key);
     else if (current) noteDrafts.set(key, { text: current.text, revision: saved.revision });
   } catch (error) {
+    if (api !== sessionHome) return;
     const current = noteDrafts.get(key);
     if (current) {
       current.saving = false;
@@ -967,7 +1089,10 @@ async function saveNote(key, overwrite) {
     }
     if (error.message === "note_conflict") await api.sync()?.catch(() => {});
   } finally {
-    refreshCards();
+    if (api === sessionHome) {
+      refreshCards();
+      if (savedSuccessfully && isRoomMemoKey(key) && noteDrafts.has(key)) queueRoomMemo(key);
+    }
   }
 }
 
@@ -1001,7 +1126,7 @@ async function exportChecklist() {
     const rooms = new Map(chosenRooms().map(room => [room.room, room]));
     for (const [key, images] of Object.entries(output)) {
       const room = JSON.parse(key)[1];
-      rooms.set(room, { room, groups: rooms.get(room)?.groups ?? [], images });
+      rooms.set(room, { room, groups: [], ...rooms.get(room), images });
     }
     visible.append(image, make("p", "공유 체크리스트 백업"), summaryFragment([...rooms.values()]));
     const profile = membership.profile;
@@ -1036,8 +1161,10 @@ async function importChecklist(file) {
     const entries = Object.entries(state.data.entries).map(([key, value]) => {
       const [category, item, room] = JSON.parse(key);
       const target = catalog.find(group => group.name === category)?.items.find(candidate => candidate.name === item);
-      if (!target || !roomNames.has(normalizeRoom(room)) || !Array.isArray(value?.choices) ||
+      const roomMemo = category === "@space" && item === "@memo";
+      if ((!target && !roomMemo) || !roomNames.has(normalizeRoom(room)) || !Array.isArray(value?.choices) ||
         !Array.isArray(value?.custom) || typeof value.note !== "string" || value.note.length > 3000 ||
+        (roomMemo && (value.choices.length || value.custom.length)) ||
         [...value.custom, ...value.choices].some(choice => typeof choice !== "string" || !choice.trim() || choice.length > 100)) {
         throw new Error("백업에 인식할 수 없는 항목이 있어요.");
       }
