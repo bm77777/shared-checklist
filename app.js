@@ -40,10 +40,12 @@ const sources = {
   curtain: ["IKEA 커튼·블라인드", "https://www.ikea.com/kr/ko/cat/curtains-blinds-tl002/"]
 };
 
-const defaultRooms = ["전체·공통", "현관", "복도", "거실", "주방", "다이닝", "안방", "작은방", "방 2", "방 3", "드레스룸", "화장실", "안방욕실", "다용도실", "발코니", "테라스"];
+const commonRoom = "전체·공통";
+const defaultRooms = [commonRoom, "현관", "복도", "거실", "주방", "다이닝", "안방", "작은방", "방 2", "방 3", "드레스룸", "화장실", "안방욕실", "다용도실", "발코니", "테라스"];
 const existingRoomNames = { "방 1": "작은방", "공용욕실": "화장실" };
 const finishes = ["천장·목공·몰딩", "타일·줄눈·석재", "바닥·걸레받이", "벽·벽지·도장·필름"];
 const roomCategories = {
+  [commonRoom]: ["범위·생활 계획", "현장 실측·착공 준비", "견적·시공 인계"],
   "발코니": ["발코니·세탁·다용도실", "창호·유리·방충망", "타일·줄눈·석재", "벽·벽지·도장·필름", "냉난방·환기·배관", "맞춤가구·수납"],
   "거실": ["조명·스위치 회로", "거실·침실·창 가림", "창호·유리·방충망", "냉난방·환기·배관", "맞춤가구·수납", ...finishes],
   "주방": ["주방 배치·아일랜드", "주방 가구·상판·가전", "냉난방·환기·배관", "창호·유리·방충망", "맞춤가구·수납", ...finishes],
@@ -131,6 +133,10 @@ function categoryApplies(category, room) {
   return sharedRoomCategories.has(category) || roomCategories[room].includes(category);
 }
 
+function roomLabel(room) {
+  return room === commonRoom ? "기타·공통" : room;
+}
+
 function itemApplies(category, item) {
   if (!planRoom || category.name !== "거실·침실·창 가림") return true;
   if (planRoom === "거실") return !["방 용도·가구 배치", "침대·서재 편의"].includes(item.name);
@@ -154,15 +160,15 @@ function selectPlanRoom(room) {
 function highlightPlanRoom(room, highlighted) {
   const region = planRegions.find(node => node.dataset.planRoom === room);
   const shortcut = Array.from(planRoomList.children).find(node => node.dataset.planRoom === room);
-  region.toggleAttribute("data-highlighted", highlighted);
-  shortcut.toggleAttribute("data-highlighted", highlighted);
+  region?.toggleAttribute("data-highlighted", highlighted);
+  shortcut?.toggleAttribute("data-highlighted", highlighted);
 }
 
 function renderPlanState() {
   workspace.toggleAttribute("data-room-selected", Boolean(planRoom));
   if (planRoom) workspace.dataset.planRoom = planRoom;
   else delete workspace.dataset.planRoom;
-  workspaceTitle.textContent = planRoom ? planRoom + " 체크리스트" : "전체 공정 체크리스트";
+  workspaceTitle.textContent = planRoom ? roomLabel(planRoom) + " 체크리스트" : "전체 공정 체크리스트";
   document.getElementById("scopeHint").textContent = planRoom
     ? "단계와 검색어는 선택한 공간의 공정에서 찾아요."
     : "단계와 검색어는 전체 공정에서 찾아요.";
@@ -301,7 +307,7 @@ function entry(category, item, room) {
 function renderRooms() {
   roomSelect.replaceChildren(new Option("공정 기본 공간", ""));
   for (const room of [...defaultRooms, ...data.rooms]) {
-    roomSelect.append(new Option(room, room));
+    roomSelect.append(new Option(roomLabel(room), room));
   }
   roomSelect.value = followCategoryRoom ? "" : activeRoom;
 }
@@ -340,13 +346,25 @@ function renderNav() {
     categorySelect.append(new Option(category.name, index));
   });
 }
+function wireRoomHighlight(control, room) {
+  control.addEventListener("pointerenter", () => highlightPlanRoom(room, true));
+  control.addEventListener("pointerleave", () => highlightPlanRoom(room, false));
+  control.addEventListener("focus", () => highlightPlanRoom(room, true));
+  control.addEventListener("blur", () => highlightPlanRoom(room, false));
+}
+
+function appendRoomShortcut(room) {
+  const shortcut = button(roomLabel(room), () => selectPlanRoom(room));
+  shortcut.dataset.planRoom = room;
+  shortcut.append(make("span", "", "plan-room-count"));
+  planRoomList.append(shortcut);
+  wireRoomHighlight(shortcut, room);
+}
+
 function wirePlan() {
   for (const region of planRegions) {
     const room = region.dataset.planRoom;
-    const shortcut = button(room, () => selectPlanRoom(room));
-    shortcut.dataset.planRoom = room;
-    shortcut.append(make("span", "", "plan-room-count"));
-    planRoomList.append(shortcut);
+    appendRoomShortcut(room);
     region.addEventListener("click", event => {
       event.preventDefault();
       selectPlanRoom(room);
@@ -356,18 +374,14 @@ function wirePlan() {
       event.preventDefault();
       selectPlanRoom(room);
     });
-    for (const control of [region, shortcut]) {
-      control.addEventListener("pointerenter", () => highlightPlanRoom(room, true));
-      control.addEventListener("pointerleave", () => highlightPlanRoom(room, false));
-      control.addEventListener("focus", () => highlightPlanRoom(room, true));
-      control.addEventListener("blur", () => highlightPlanRoom(room, false));
-    }
+    wireRoomHighlight(region, room);
   }
-  document.getElementById("browseFromPlan").addEventListener("click", event => {
-    event.preventDefault();
-    selectPlanRoom("");
-  });
+  appendRoomShortcut(commonRoom);
 }
+document.getElementById("browseFromPlan").addEventListener("click", event => {
+  event.preventDefault();
+  selectPlanRoom("");
+});
 function photoGallery(images, interactive = true, onDelete) {
   const gallery = make("div", undefined, "photo-grid");
   images.slice().reverse().forEach((source, index) => {
@@ -537,7 +551,7 @@ function renderReferencePhotos(room) {
   const slot = document.getElementById("referencePhotoTools");
   function updateHeading() {
     if (referenceRoom !== room) return;
-    title.textContent = "레퍼런스 사진 · " + room + " · " + (photos[key]?.length ?? 0) + "장";
+    title.textContent = "레퍼런스 사진 · " + roomLabel(room) + " · " + (photos[key]?.length ?? 0) + "장";
   }
   updateHeading();
   slot.replaceChildren(attachPhotoTools(key, updateHeading));
@@ -681,7 +695,7 @@ function renderCatalog() {
     if (!items.length) continue;
     const section = make("section");
     const heading = make("div", undefined, "heading");
-    heading.append(make("h2", category.name), make("span", room + " · " + items.length + "개 항목", "meta"));
+    heading.append(make("h2", category.name), make("span", roomLabel(room) + " · " + items.length + "개 항목", "meta"));
     const refs = make("p", undefined, "group-sources");
     category.refs.forEach(key => refs.append(sourceLink(key)));
     section.append(heading, refs);
@@ -709,7 +723,7 @@ function summaryFragment(rooms, editable = false) {
   const fragment = document.createDocumentFragment();
   for (const { room, groups, images, memo } of rooms) {
     const section = make("section", undefined, "summary-room");
-    section.append(make("h3", room));
+    section.append(make("h3", roomLabel(room)));
     if (images.length) {
       section.append(make("h4", "레퍼런스 사진"), photoGallery(images, editable));
     }
@@ -770,7 +784,7 @@ function downloadFile(content, type, filename) {
 function downloadSelection() {
   const lines = ["우리 집 인테리어 체크리스트"];
   for (const { room, groups, images, memo } of chosenRooms()) {
-    lines.push("", "[" + room + "]");
+    lines.push("", "[" + roomLabel(room) + "]");
     if (images.length) lines.push("레퍼런스 사진 " + images.length + "장 (HTML에서 확인)");
     if (memo.trim()) lines.push("공간 메모", memo);
     for (const { category, items } of groups) {
